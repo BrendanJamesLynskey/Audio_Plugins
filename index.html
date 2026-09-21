@@ -117,9 +117,19 @@ details[open] summary::before{transform:rotate(90deg)}
 .chain .node.fx{border-color:var(--accent);color:var(--accent)}
 .chain .node.out{border-color:var(--accent2);color:var(--accent2)}
 .chain .arrow{color:var(--fg-dim);font-family:monospace}
+/* language switcher */
+.lang-switch{position:fixed;top:.9rem;right:1rem;z-index:300;display:flex;align-items:center;gap:.45rem;background:rgba(10,11,15,.92);backdrop-filter:blur(8px);border:1px solid var(--border);border-radius:3px;padding:.35em .8em;font-family:'Lucida Console',Monaco,monospace;font-size:.75rem;letter-spacing:.05em}
+.lang-switch a{color:var(--fg-dim);border-bottom:none;transition:color .2s}
+.lang-switch a:hover{color:var(--accent)}
+.lang-switch .sep{color:var(--border)}
+.lang-switch .active{color:var(--accent);cursor:default}
 </style>
 </head>
 <body>
+
+<div class="lang-switch">
+  <span class="active">EN</span><span class="sep">/</span><a href="index_zh.html">中文</a>
+</div>
 
 <header>
   <canvas id="hero"></canvas>
