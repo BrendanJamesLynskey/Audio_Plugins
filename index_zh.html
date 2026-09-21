@@ -1,0 +1,604 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Audio Plugins — 历史、类型、技术与开发框架</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"
+  onload="renderMathInElement(document.body, {delimiters:[{left:'$$',right:'$$',display:true},{left:'$',right:'$',display:false}],throwOnError:false});"></script>
+<style>
+:root{
+  --bg:#0a0b0f;--bg2:#12141c;--bg3:#1a1d2a;
+  --fg:#d4d6e0;--fg-dim:#8a8d9a;
+  --accent:#e8a44a;
+  --accent2:#4a9de8;--accent3:#5ce89a;--accent4:#e85a7a;--accent5:#b06ae8;
+  --border:#2a2d3a;--glow:rgba(232,164,74,0.15)
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth;font-size:16px}
+body{background:var(--bg);color:var(--fg);font-family:'Palatino Linotype','Book Antiqua',Palatino,'Georgia',serif;line-height:1.75;overflow-x:hidden}
+::selection{background:var(--accent);color:var(--bg)}
+a{color:var(--accent);text-decoration:none;border-bottom:1px solid transparent;transition:border-color .2s}
+a:hover{border-bottom-color:var(--accent)}
+header{min-height:100vh;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;padding:2rem;position:relative;overflow:hidden}
+header canvas{position:absolute;top:0;left:0;width:100%;height:100%;z-index:0;opacity:.35}
+header .content{position:relative;z-index:1;max-width:820px}
+header h1{font-size:clamp(2rem,5vw,3.5rem);font-weight:300;letter-spacing:.05em;color:var(--accent);text-shadow:0 0 60px var(--glow);margin-bottom:.5em}
+header h1 em{font-style:italic;color:var(--fg);font-weight:400}
+header .subtitle{font-size:1.15rem;color:var(--fg-dim);max-width:660px;margin:0 auto 2em}
+header .people{display:flex;gap:2rem;justify-content:center;flex-wrap:wrap;margin-bottom:2em}
+header .people span{font-size:.95rem;color:var(--fg);padding:.4em 1em;border:1px solid var(--border);border-radius:2px;background:rgba(26,29,42,.7)}
+nav#toc{position:sticky;top:0;z-index:100;background:rgba(10,11,15,.92);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);padding:.6rem 1rem;overflow-x:auto;white-space:nowrap;text-align:center}
+nav#toc a{display:inline-block;font-size:.8rem;color:var(--fg-dim);padding:.3em .8em;margin:0 .1em;letter-spacing:.04em;text-transform:uppercase;font-family:'Lucida Console',Monaco,monospace;transition:color .2s;border-bottom:none}
+nav#toc a:hover,nav#toc a.active{color:var(--accent)}
+section{max-width:900px;margin:0 auto;padding:4rem 1.5rem;border-bottom:1px solid var(--border)}
+section:last-of-type{border-bottom:none}
+h2{font-size:clamp(1.5rem,3vw,2.2rem);font-weight:300;color:var(--accent);margin-bottom:.3em;letter-spacing:.03em}
+h2 .num{font-family:'Lucida Console',Monaco,monospace;font-size:.7em;color:var(--fg-dim);margin-right:.5em}
+h3{font-size:1.2rem;color:var(--accent2);margin:2em 0 .5em;font-weight:400}
+p{margin-bottom:1.2em}
+.lead{font-size:1.08rem;color:var(--fg);margin-bottom:1.5em}
+strong{color:var(--fg);font-weight:600}
+ul,ol{margin:0 0 1.2em 1.4em}
+li{margin-bottom:.5em}
+.viz{margin:2em 0;background:var(--bg2);border:1px solid var(--border);border-radius:4px;overflow:hidden}
+.viz canvas{display:block;width:100%;cursor:crosshair}
+.viz-caption{font-size:.8rem;color:var(--fg-dim);padding:.6em 1em;border-top:1px solid var(--border);font-family:'Lucida Console',Monaco,monospace}
+.controls{display:flex;flex-wrap:wrap;gap:.8rem;padding:.8em 1em;background:var(--bg3);border-top:1px solid var(--border);align-items:center}
+.controls label{font-size:.78rem;color:var(--fg-dim);font-family:'Lucida Console',Monaco,monospace;display:flex;align-items:center;gap:.4em}
+.controls input[type="range"]{width:120px;accent-color:var(--accent)}
+.controls input[type="checkbox"]{accent-color:var(--accent)}
+.controls select{background:var(--bg);color:var(--fg);border:1px solid var(--border);padding:.3em .5em;font-size:.78rem;border-radius:2px;font-family:inherit}
+.controls button,.btn{background:var(--accent);color:var(--bg);border:none;padding:.4em 1em;font-size:.78rem;font-family:'Lucida Console',Monaco,monospace;cursor:pointer;border-radius:2px;letter-spacing:.03em;transition:background .2s}
+.controls button:hover,.btn:hover{filter:brightness(1.1)}
+.controls button.active{background:var(--accent3)}
+.math{display:block;text-align:center;padding:1.4em 1.2em;margin:1.5em 0;background:var(--bg2);border-left:3px solid var(--accent);font-size:1.15rem;color:var(--fg);overflow-x:auto;border-radius:0 4px 4px 0}
+.math .katex{font-size:1.25em}
+.timeline{position:relative;padding:1em 0 1em 2em;margin:2em 0}
+.timeline::before{content:'';position:absolute;left:.6em;top:0;bottom:0;width:2px;background:var(--border)}
+.timeline-item{position:relative;margin-bottom:1.8em;padding-left:1.5em}
+.timeline-item::before{content:'';position:absolute;left:-1.95em;top:.5em;width:10px;height:10px;border-radius:50%;background:var(--accent);border:2px solid var(--bg)}
+.timeline-year{font-family:'Lucida Console',Monaco,monospace;color:var(--accent);font-size:.85rem;margin-bottom:.2em}
+.timeline-text{font-size:.92rem;color:var(--fg-dim)}
+blockquote{border-left:3px solid var(--accent5);padding:.8em 1.2em;margin:1.5em 0;color:var(--fg-dim);font-style:italic;background:rgba(176,106,232,.05)}
+blockquote cite{display:block;font-size:.85rem;color:var(--accent5);margin-top:.5em;font-style:normal}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:1.5em;margin:1.5em 0}
+.grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:1.2em;margin:1.5em 0}
+@media(max-width:700px){.grid-2,.grid-3{grid-template-columns:1fr}}
+.card{background:var(--bg2);border:1px solid var(--border);border-radius:4px;padding:1.2em 1.4em}
+.card h4{color:var(--accent2);font-weight:500;margin-bottom:.4em;font-size:1rem}
+.card p{font-size:.9rem;color:var(--fg-dim);margin-bottom:0}
+.card.link-card{transition:border-color .2s,transform .2s}
+.card.link-card:hover{border-color:var(--accent);transform:translateY(-2px)}
+.card.link-card a{border-bottom:none}
+.card .tag{font-family:'Lucida Console',Monaco,monospace;font-size:.68rem;text-transform:uppercase;letter-spacing:.08em;color:var(--accent);display:block;margin-top:.6em}
+table{width:100%;border-collapse:collapse;margin:1.5em 0;font-size:.9rem}
+th,td{text-align:left;padding:.6em .8em;border-bottom:1px solid var(--border)}
+th{color:var(--accent);font-weight:500;font-family:'Lucida Console',Monaco,monospace;font-size:.8rem;text-transform:uppercase;letter-spacing:.03em}
+td{color:var(--fg-dim)}
+td strong{color:var(--fg)}
+.table-wrap{overflow-x:auto;margin:1.5em 0}
+.table-wrap table{margin:0;min-width:640px}
+pre{background:#08090d;border:1px solid var(--border);border-radius:4px;padding:1.2em 1.4em;overflow-x:auto;margin:1.5em 0;font-size:.82rem;line-height:1.6}
+code{font-family:'Lucida Console',Monaco,'Courier New',monospace}
+pre code{color:#c8cbd8}
+p code,li code,td code{background:var(--bg3);color:var(--accent3);padding:.1em .4em;border-radius:2px;font-size:.85em}
+.code-caption{font-size:.78rem;color:var(--fg-dim);font-family:'Lucida Console',Monaco,monospace;margin:-1em 0 1.5em;padding-left:.2em}
+.references{margin-top:2em;padding:1.5em;background:var(--bg2);border:1px solid var(--border);border-radius:4px}
+.references h3{margin-top:0}
+.references ol{padding-left:1.5em}
+.references li{font-size:.85rem;color:var(--fg-dim);margin-bottom:.5em;line-height:1.5}
+.references li em{color:var(--fg)}
+.related-box{margin-top:2em;padding:1.4em 1.6em;background:var(--bg2);border:1px solid var(--accent);border-radius:4px}
+.related-box h3{color:var(--accent);margin-top:0}
+.related-box ul{padding-left:0;list-style:none;margin-left:0}
+.related-box li{font-size:.95rem;color:var(--fg-dim);margin-bottom:.6em;position:relative;padding-left:1em}
+.related-box li::before{content:'→';position:absolute;left:0;color:var(--accent)}
+.related-box li a{font-weight:500;color:var(--fg)}
+.related-box li a:hover{color:var(--accent)}
+footer{text-align:center;padding:3em 1.5em;color:var(--fg-dim);font-size:.85rem;border-top:1px solid var(--border)}
+::-webkit-scrollbar{width:6px;height:6px}
+::-webkit-scrollbar-track{background:var(--bg)}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+::-webkit-scrollbar-thumb:hover{background:var(--fg-dim)}
+.expandable{margin:1.5em 0;border:1px solid var(--border);border-radius:4px;overflow:hidden}
+.expandable summary{padding:.8em 1.2em;background:var(--bg3);cursor:pointer;font-size:.9rem;color:var(--accent5);font-family:'Lucida Console',Monaco,monospace;letter-spacing:.03em;list-style:none;display:flex;align-items:center;gap:.5em}
+.expandable summary::before{content:'▶';font-size:.7em;transition:transform .2s}
+details[open] summary::before{transform:rotate(90deg)}
+.expandable summary:hover{color:var(--fg)}
+.expandable .inner{padding:1.2em 1.4em;background:rgba(176,106,232,.04)}
+.note{font-size:.85rem;color:var(--fg-dim);margin:1em 0;padding:.6em 1em;border-left:2px solid var(--accent3);background:rgba(92,232,154,.05)}
+/* signal-chain diagram */
+.chain{display:flex;flex-wrap:wrap;align-items:center;gap:.4em;justify-content:center;padding:1.4em 1em;background:var(--bg2);border:1px solid var(--border);border-radius:4px;margin:1.5em 0}
+.chain .node{padding:.5em .9em;border:1px solid var(--border);border-radius:3px;background:var(--bg3);font-family:'Lucida Console',Monaco,monospace;font-size:.72rem;color:var(--fg);text-align:center}
+.chain .node.src{border-color:var(--accent3);color:var(--accent3)}
+.chain .node.fx{border-color:var(--accent);color:var(--accent)}
+.chain .node.out{border-color:var(--accent2);color:var(--accent2)}
+.chain .arrow{color:var(--fg-dim);font-family:monospace}
+/* language switcher */
+.lang-switch{position:fixed;top:.9rem;right:1rem;z-index:300;display:flex;align-items:center;gap:.45rem;background:rgba(10,11,15,.92);backdrop-filter:blur(8px);border:1px solid var(--border);border-radius:3px;padding:.35em .8em;font-family:'Lucida Console',Monaco,monospace;font-size:.75rem;letter-spacing:.05em}
+.lang-switch a{color:var(--fg-dim);border-bottom:none;transition:color .2s}
+.lang-switch a:hover{color:var(--accent)}
+.lang-switch .sep{color:var(--border)}
+.lang-switch .active{color:var(--accent);cursor:default}
+</style>
+</head>
+<body>
+
+<div class="lang-switch">
+  <a href="index.html">EN</a><span class="sep">/</span><span class="active">中文</span>
+</div>
+
+<header>
+  <canvas id="hero"></canvas>
+  <div class="content">
+    <h1>Audio <em>Plugins</em></h1>
+    <p class="subtitle">
+      这些小软件塑造了你听到的几乎所有声音 —— 那些驻留在数字音频工作站（DAW）里的
+      均衡器、压缩器、混响和合成器。这里将完整地梳理它们的历史、工程师们常构建的
+      类别、承载它们的格式、打造它们的开发框架，以及七个可以在浏览器里直接试听的
+      可用示例。
+    </p>
+    <div class="people">
+      <span>历史</span><span>类型</span><span>技术</span><span>框架</span><span>JUCE</span>
+    </div>
+    <a href="#what" class="btn">开始游览 ↓</a>
+  </div>
+</header>
+
+<nav id="toc">
+  <a href="#what">0 · 什么是</a>
+  <a href="#history">1 · 历史</a>
+  <a href="#formats">2 · 格式</a>
+  <a href="#types">3 · 类型</a>
+  <a href="#anatomy">4 · 内部架构</a>
+  <a href="#frameworks">5 · 开发框架</a>
+  <a href="#dsp">6 · DSP 模块</a>
+  <a href="#shipping">7 · 构建与发布</a>
+  <a href="#examples">8 · 示例合辑</a>
+</nav>
+
+<!-- ============================================================ -->
+<section id="what">
+  <h2><span class="num">0</span>什么是 audio plugin（音频插件）？</h2>
+  <p class="lead">
+    <strong>audio plugin（音频插件）</strong> 是一个自包含的软件模块，由宿主（host）应用在运行时加载，用于处理或生成音频。宿主 —— 通常是 <strong>数字音频工作站（DAW）</strong>，如 Ableton Live、Logic Pro、Cubase、Pro Tools 或 Reaper —— 掌控着音频硬件、走带（transport）和混音路由图；plugin 被放进这张路由图里只做一件事：滤掉信号的某些频段、压缩它的动态、为它披上混响，或者从 MIDI 合成出音符。
+  </p>
+  <p>
+    从概念上讲，plugin 是一个对采样流求值的函数。宿主向它传入一小块输入采样以及当前的参数值，plugin 则返回一块输出采样。<strong>effect（效果器）</strong> 把音频输入映射为音频输出；<strong>instrument（乐器）</strong> 把 MIDI 输入映射为音频输出。其余的一切 —— 旋钮、电平表、保存的预设 —— 都只是围绕这个核心映射的附属机制。
+  </p>
+
+  <div class="chain">
+    <span class="node src">音轨 / 输入</span><span class="arrow">→</span>
+    <span class="node fx">EQ</span><span class="arrow">→</span>
+    <span class="node fx">Compressor</span><span class="arrow">→</span>
+    <span class="node fx">Saturation</span><span class="arrow">→</span>
+    <span class="node fx">Delay</span><span class="arrow">→</span>
+    <span class="node out">混音总线</span>
+  </div>
+  <p class="code-caption">一条典型的 <strong>insert（插入）</strong> 链：plugin 串联处理信号，每个 plugin 的输出作为下一个的输入。</p>
+
+  <p>
+    有两个事实决定了 plugin 的一切写法。其一，它们运行在 <strong>实时音频线程（real-timeaudio thread）</strong> 上：宿主每隔几毫秒就会调用 plugin 的 process 函数，而它必须在声卡需要下一块 buffer 之前完成，否则听者就会听到爆音。这个回调不能加锁（mutex）、不能分配内存、不能碰文件、也不能阻塞在任意事情上 —— 这是支配一切严肃音频代码的纪律。其二，plugin 必须符合一种 <strong>格式（format）</strong>：一份二进制与 API 的契约（VST3、AudioUnit、AAX、CLAP……），告诉宿主如何找到它、协商它的 bus、枚举它的参数，并安全地调用它。
+  </p>
+
+  <h3>试试看 —— plugin 其实就是 <span style="font-style:italic">f(x)</span></h3>
+  <p>
+    下面有一段在浏览器中合成的短循环，并通过一个简易的“plugin”处理 —— 一个带 bypass的单旋钮倾斜滤波器。这就是全部理念的缩影：一个信号源、一个带参数的处理器，以及一次A/B 对比。文末的七个示例仓库为每种效果器家族构建了真实的产品。
+  </p>
+  <div class="viz">
+    <canvas id="scopeDemo" height="150"></canvas>
+    <div class="viz-caption" id="scopeCap">点击播放 —— 输出波形</div>
+    <div class="controls">
+      <button id="playDemo">▶ 播放</button>
+      <button id="bypassDemo">bypass: 关</button>
+      <label>tone <input type="range" id="toneDemo" min="-1" max="1" step="0.01" value="0"></label>
+      <label>mix <input type="range" id="mixDemo" min="0" max="1" step="0.01" value="1"></label>
+      <span class="viz-caption" style="padding:0" id="stateDemo">空闲</span>
+    </div>
+  </div>
+  <p class="note">
+    本站的所有音频均由浏览器中的 Web Audio API 实时生成或处理 —— 没有任何内容来自文件流式播放。它忠实地模拟了原生 plugin 在 DAW 内部所做的行为，遵循的是相同的原理。
+  </p>
+</section>
+
+<!-- ============================================================ -->
+<section id="history">
+  <h2><span class="num">1</span>一段简短的历史</h2>
+  <p class="lead">
+    plugin 是两股古老世界碰撞的产物：一柜子的外置录音室硬件，和一台快得足以实时模拟它们的通用计算机。
+  </p>
+  <p>
+    在二十世纪的大部分时间里，信号处理意味着 <strong>硬件</strong>：无源的 Pultec 均衡器、光电式的LA-2A 压缩器、EMT 板式混响、磁带回声，还有 Moog 模块化合成器 —— 每一台都是接进调音台的实体机箱。数字信号处理最初以昂贵的专用硬件形态进入录音室（Lexicon 224、Publison 和 AMS 的机器、Sony DRE），随后在 1980 年代末以 <strong>DSP 卡</strong> 系统出现：Digidesign 的 Sound Tools 以及后来的 Pro Tools 依靠安装在电脑内的 Motorola 56000芯片运行效果器。处理仍然发生在定制的硅片上，但路由和用户界面已经搬进了软件。
+  </p>
+  <p>
+    决定性的突破发生在 1996 年：Steinberg 在 Cubase 中开放了 <strong>Virtual StudioTechnology（VST）</strong> 接口，并且 —— 关键的是 —— 发布了 SDK，让任何人都能编写运行在宿主 CPU 上的效果器。原生处理、开放的 API，加上越来越快的处理器，把一个小众的硬件市场变成了软件市场。不到十年，调音台、外置机柜和合成器都被重新描绘成了屏幕上的窗口。
+  </p>
+
+  <div class="timeline">
+    <div class="timeline-item"><div class="timeline-year">1987</div><div class="timeline-text"><strong>Digidesign Sound Tools</strong> —— Mac 上首个主流的硬盘录音/编辑系统。效果器运行在专用的 DSP 硬件上；它演化成了 <strong>Pro Tools</strong>（1991），并带来运行在 56k DSP 卡上的 <strong>TDM</strong> plugin 总线。</div></div>
+    <div class="timeline-item"><div class="timeline-year">1996</div><div class="timeline-text"><strong>Steinberg VST 1.0</strong> 随 Cubase 3.02 发布，并提供免费 SDK。原生的（宿主 CPU 上的）效果器从此对每个人成为可能。首批随附的 plugin —— 包括一个混响和 <em>Espacial</em> —— 奠定了模板。微软的 <strong>DirectX</strong> plugin（Cakewalk）大约同时出现在 Windows 上。</div></div>
+    <div class="timeline-item"><div class="timeline-year">1999</div><div class="timeline-text"><strong>VST 2.0</strong> 增加了 MIDI，从而带来 <strong>VST instruments（VSTi）</strong>。Native Instruments 的 <em>Reaktor</em>、Propellerhead 的 <em>ReBirth/Reason</em> 时代，以及一波软件合成器接踵而至。Steinberg 的 <em>Neon</em> 是第一款 VSTi。</div></div>
+    <div class="timeline-item"><div class="timeline-year">2002–2005</div><div class="timeline-text">Apple 在 Mac OS X 中把 <strong>Audio Units（AU）</strong> 作为 Core Audio 的一部分发布，并与 Logic 和 GarageBand 深度集成。Digidesign 用 <strong>RTAS</strong> 取代 TDM 的宿主 API，用于原生 Pro Tools 处理。跨平台框架开始出现，一次性覆盖所有这些格式。</div></div>
+    <div class="timeline-item"><div class="timeline-year">2004–2008</div><div class="timeline-text"><strong>JUCE</strong>（Julian Storer）成长为跨格式 plugin 领域占主导地位的 C++ 框架。<strong>UAD</strong> 和 <strong>Waves</strong> 以精细的硬件仿真起家；卷积混响（Altiverb）和音箱模拟建模成为主流。</div></div>
+    <div class="timeline-item"><div class="timeline-year">2008</div><div class="timeline-text"><strong>VST3</strong> —— 一次推倒重来的重新设计：采样精度的自动化、灵活的 bus/侧链（side-chain）布局、静音标志，以及一个把处理器与编辑器分离的、更清晰的组件模型。</div></div>
+    <div class="timeline-item"><div class="timeline-year">2011–2018</div><div class="timeline-text"><strong>AUv3</strong> 把沙盒化的 Audio Units 带到了 iOS 和 macOS。Avid 用 <strong>AAX</strong>（原生与 DSP/HDX）取代 RTAS，用于 Pro Tools。Roli 收购了 JUCE（2014）；如今的 plugin 世界压倒性地是软件、跨平台且基于原生 CPU 的。</div></div>
+    <div class="timeline-item"><div class="timeline-year">2022</div><div class="timeline-text"><strong>CLAP</strong>（CLever Audio Plugin）—— 一个来自 Bitwig 和 u-he 的开源、MIT 许可格式 —— 带来现代的线程模型、复音逐音符（per-note）调制与逐复音参数控制，迅速获得了宿主支持。同一年，浏览器的 <strong>Web Audio</strong> 与 <strong>WebAssembly</strong> 让运行于本页面的 plugin 成为现实。</div></div>
+  </div>
+
+  <blockquote>
+    plugin 对录音室所做的，正如电子表格对会计办公桌所做的：它不只是把工具数字化，更消解了工具与工作台之间的边界，使得一个无限的机架可以被随心所欲地召唤与重新排布。
+  </blockquote>
+</section>
+
+<!-- ============================================================ -->
+<section id="formats">
+  <h2><span class="num">2</span>格式 —— 承载 plugin 的技术</h2>
+  <p class="lead">
+    <strong>格式（format）</strong> 是 plugin 与宿主之间的契约：二进制如何打包、宿主如何发现并实例化它、bus 与参数如何描述、process 回调如何被调用。选择支持哪些格式是第一个工程决策；大多数开发者通过一个框架同时支持多种格式。
+  </p>
+
+  <div class="table-wrap">
+  <table>
+    <thead><tr><th>格式</th><th>所有者</th><th>始于</th><th>平台</th><th>备注</th></tr></thead>
+    <tbody>
+      <tr><td><strong>VST2</strong></td><td>Steinberg</td><td>1999</td><td>Win / macOS / Linux</td><td>二十年里无处不在；SDK 许可于 2018 年关闭，虽已弃用但仍被各处托管。</td></tr>
+      <tr><td><strong>VST3</strong></td><td>Steinberg</td><td>2008</td><td>Win / macOS / Linux</td><td>当前的标准。采样精度自动化、灵活的 bus、静音标志。GPLv3 与专有许可双许可。</td></tr>
+      <tr><td><strong>Audio Unit (AU / v2)</strong></td><td>Apple</td><td>2002</td><td>macOS</td><td>原生属于 Core Audio；Logic 与 GarageBand 所必需。由 <code>auval</code> 验证。</td></tr>
+      <tr><td><strong>AUv3</strong></td><td>Apple</td><td>2015</td><td>macOS / iOS</td><td>应用扩展模型、沙盒化；iOS 上唯一的 plugin 格式。</td></tr>
+      <tr><td><strong>AAX</strong></td><td>Avid</td><td>2011</td><td>Win / macOS</td><td>仅用于 Pro Tools；有原生与 DSP（HDX）两种变体。SDK 需要 Avid 注册；要求签名构建。</td></tr>
+      <tr><td><strong>CLAP</strong></td><td>Bitwig / u-he</td><td>2022</td><td>Win / macOS / Linux</td><td>开放 MIT 许可、现代线程模型、逐音符/复音调制。宿主支持增长迅速。</td></tr>
+      <tr><td><strong>LV2</strong></td><td>开放社区</td><td>2008</td><td>主要是 Linux</td><td>LADSPA/DSSI 的继任者；通过 RDF “features” 扩展。Linux 的原生标准。</td></tr>
+      <tr><td><strong>LADSPA / DSSI</strong></td><td>开放社区</td><td>2000</td><td>Linux</td><td>极简的早期 Linux API；大多已被 LV2 取代。</td></tr>
+      <tr><td><strong>RTAS / TDM</strong></td><td>Digidesign</td><td>1990s</td><td>Win / macOS</td><td>遗留的 Pro Tools 格式，已被 AAX 取代。</td></tr>
+      <tr><td><strong>Standalone</strong></td><td>—</td><td>—</td><td>全部</td><td>根本就不是 plugin：把同样的 DSP 包装成自己的应用程序，直接与音频设备对话。</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <p>
+    在种种差异之下，每种格式都暴露同样几个概念：一种 <strong>枚举参数</strong> 的方式（带范围、单位和自动化）、一种 <strong>bus 布局</strong>（单声道/立体声/侧链的输入与输出）、一个作用于采样块的 <strong>process 回调</strong>，以及一种 <strong>保存与恢复状态</strong> 的机制，让会话能精确还原你所听到的内容。好的框架会用一个 API 隐藏掉格式相关的底层细节，于是你只写一次 DSP，就能同时编译成 VST3、AU、AAX、CLAP 和Standalone。
+  </p>
+  <div class="note">本网站通篇使用的 Web 对应物 —— Web Audio 的 <code>AudioWorkletNode</code> —— 本身也是一种“格式”：在专用音频线程上的 process 回调、以自动化曲线形式送达的参数，以及用于 GUI 的消息端口。它与 VST3/AU 的对应关系完全一致。</div>
+</section>
+
+<!-- ============================================================ -->
+<section id="types">
+  <h2><span class="num">3</span>常见的插件类型</h2>
+  <p class="lead">
+    几乎每个 plugin 都属于十几个家族之一。标有绿色箭头的七个在此合集中有完整可用的示例 —— 点进去即可试听。
+  </p>
+
+  <h3>Effects —— 效果器：处理音频输入</h3>
+  <div class="grid-3">
+    <div class="card link-card"><h4><a href="https://brendanjameslynskey.github.io/Plugin_Example_EQ/">Equalisation（均衡） →</a></h4><p>提升或衰减特定频段的滤波器：参数式、搁架式、图示式、线性相位式。任何混音中使用频率最高的工具。</p><span class="tag">示例 ▶</span></div>
+    <div class="card link-card"><h4><a href="https://brendanjameslynskey.github.io/Plugin_Example_Compressor/">Dynamics（动态） →</a></h4><p>压缩器、限制器、噪声门、扩展器 —— 随时间对电平进行自动控制。让声音更贴、更有冲击力、更响。</p><span class="tag">示例 ▶</span></div>
+    <div class="card link-card"><h4><a href="https://brendanjameslynskey.github.io/Plugin_Example_Reverb/">Reverberation（混响） →</a></h4><p>模拟空间：算法式（comb/allpass、FDN）与卷积式。带来纵深与方位。</p><span class="tag">示例 ▶</span></div>
+    <div class="card link-card"><h4><a href="https://brendanjameslynskey.github.io/Plugin_Example_Delay/">Delay / Echo（延迟/回声） →</a></h4><p>带反馈的延迟线：slapback、dub 回声、速度同步的节奏 tap、乒乓式。</p><span class="tag">示例 ▶</span></div>
+    <div class="card link-card"><h4><a href="https://brendanjameslynskey.github.io/Plugin_Example_Distortion/">Distortion / Saturation（失真/饱和） →</a></h4><p>刻意引入的非线性：波形塑形、电子管/磁带仿真、fuzz、bit-crushing。谐波与颗粒感。</p><span class="tag">示例 ▶</span></div>
+    <div class="card link-card"><h4><a href="https://brendanjameslynskey.github.io/Plugin_Example_Modulation/">Modulation（调制） →</a></h4><p>合唱、镶边、移相、颤音 —— 用 LFO 扫动延迟或相位，制造运动与宽度。</p><span class="tag">示例 ▶</span></div>
+    <div class="card"><h4>Pitch &amp; Time（音高与时间）</h4><p>音高修正、人声和声器、时间伸缩、共振峰位移 —— 属于 phase-vocoder 与 PSOLA 的领域。</p></div>
+    <div class="card"><h4>Spectral（频谱）</h4><p>FFT 域处理器：频谱门限、去噪、冻结、“涂抹”式重合成、声码器。</p></div>
+    <div class="card"><h4>Utility &amp; Metering（工具与电平表）</h4><p>增益、声像、立体声宽度、抖动（dither）、LUFS/响度表、频谱分析、相关性 —— 那些不显眼却必不可少的工具。</p></div>
+  </div>
+
+  <h3>Instruments —— 乐器：从 MIDI 生成音频</h3>
+  <div class="grid-3">
+    <div class="card link-card"><h4><a href="https://brendanjameslynskey.github.io/Plugin_Example_Synth/">Synthesisers（合成器） →</a></h4><p>减法、FM、加法、波表、粒子、物理建模。从第一性原理出发的声音。</p><span class="tag">示例 ▶</span></div>
+    <div class="card"><h4>Samplers &amp; ROMplers（采样器与 ROM 音源）</h4><p>回放并操控映射在键盘上的录制音频；多重采样、round-robin、键区/力度分区。</p></div>
+    <div class="card"><h4>Drum machines（鼓机）</h4><p>步进音序或打击垫触发的打击乐器，常常把采样与合成混合在一起。</p></div>
+  </div>
+
+  <h3>MIDI &amp; control（MIDI 与控制）</h3>
+  <div class="grid-3">
+    <div class="card"><h4>MIDI effects（MIDI 效果器）</h4><p>琶音器、和弦生成器、音阶量化器、音符重复器 —— 它们变换的是 MIDI，而不是音频。</p></div>
+    <div class="card"><h4>Modulators（调制器）</h4><p>LFO、包络跟随器、宏控制器，路由到其他 plugin 的参数（取决于宿主）。</p></div>
+    <div class="card"><h4>Analysis / sidechain sources（分析/侧链信号源）</h4><p>调音器、调性侦测器，以及驱动其他处理器的触发器。</p></div>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<section id="anatomy">
+  <h2><span class="num">4</span>Plugin 的内部架构</h2>
+  <p class="lead">
+    无论格式或框架如何，一个 plugin 都有相同的四个部分。理解它们之间的边界 —— 尤其是音频线程与其余一切之间的那堵墙 —— 就是这门手艺的全部。
+  </p>
+
+  <div class="grid-2">
+    <div class="card"><h4>1 · 处理器（DSP 核心）</h4><p>实时的核心。一个 <code>processBlock</code> 回调接收音频 buffer 和当前参数，逐采样或逐块地计算输出。不分配、不加锁、无 I/O。</p></div>
+    <div class="card"><h4>2 · 参数（Parameters）</h4><p>可自动化、宿主可见的控制项，每个都带有范围、单位和默认值。它们原子化地跨越线程边界，通常会被平滑处理以避免 zipper noise（拉链噪声）。</p></div>
+    <div class="card"><h4>3 · 状态（State）</h4><p>随会话或预设保存的完整快照：参数加上任何附加数据（加载的 IR、曲线）。作为一段不透明的二进制 blob 与宿主进行序列化往返。</p></div>
+    <div class="card"><h4>4 · 编辑器（GUI）</h4><p>旋钮、电平表和显示界面的可选窗口，运行在消息线程上。它观察参数并把改动发回去 —— 从不直接触碰 DSP 数据。</p></div>
+  </div>
+
+  <h3>实时规范（The real-time contract）</h3>
+  <p>
+    音频回调在硬性期限下运行。在 48&nbsp;kHz 采样率、128 采样 buffer 的情况下，宿主期望大约每 $128/48000 \approx 2.67$&nbsp;ms 交付下一个数据块，永远如此，毫无例外。错过它，听者就会听到一声爆音或中断。在回调内部，以下规则是绝对的：
+  </p>
+  <ul>
+    <li><strong>不分配内存</strong> —— <code>new</code>/<code>malloc</code> 可能在操作系统上阻塞。在 <code>prepareToPlay</code> 中预先分配好一切。</li>
+    <li><strong>不加锁</strong> —— 被低优先级线程持有的 mutex 可能导致优先级反转和爆音。用无锁 FIFO 和原子变量通信。</li>
+    <li><strong>不调用系统调用</strong> —— 没有文件、网络或控制台 I/O；没有无界循环。</li>
+    <li><strong>有界且确定的计算</strong> —— 一个数据块的开销不能以可能突变的方式依赖数据。</li>
+  </ul>
+  <div class="math">
+    $$t_{\text{deadline}} = \frac{N_{\text{buffer}}}{f_s} \quad\Rightarrow\quad \frac{128}{48000}\,\text{s} \approx 2.67\ \text{ms}$$
+  </div>
+  <p>
+    DSP 所做的一切 —— 每个 biquad、每个延迟 tap、每个振荡器 —— 都是一小笔可预测的运算量，被精心设计成即使同时运行数十个实例也能从容落在该时间窗内。
+  </p>
+
+  <details class="expandable">
+    <summary>为什么参数必须被平滑处理</summary>
+    <div class="inner">
+      <p>参数若从一块到下一块瞬间改变，会在系数或增益中产生阶跃不连续，耳朵会把它听成一声爆音（“zipper noise”）。解决办法是按采样应用一阶平滑器：</p>
+      <p style="text-align:center">$g[n] = g[n-1] + \alpha\,(g_{\text{target}} - g[n-1])$</p>
+      <p>其中 $\alpha$ 针对较短的时间常数（几毫秒）选取。框架会以 <code>SmoothedValue</code>（JUCE）或 k-rate 的 <code>AudioParam</code> 渐变（Web Audio）形式提供这一能力。本合集中的每个示例都会平滑自己的参数。</p>
+    </div>
+  </details>
+</section>
+
+<!-- ============================================================ -->
+<section id="frameworks">
+  <h2><span class="num">5</span>开发框架 —— plugin 实际是如何构建的</h2>
+  <p class="lead">
+    没有人会为每个产品手写 VST3、AU、AAX 和 CLAP 的样板代码。<strong>框架（framework）</strong> 提供格式封装、DSP 库、GUI 工具集和构建系统，于是你只写一次 plugin，就能导出到所有目标平台。
+  </p>
+
+  <div class="table-wrap">
+  <table>
+    <thead><tr><th>框架</th><th>语言</th><th>目标</th><th>特点</th></tr></thead>
+    <tbody>
+      <tr><td><strong>JUCE</strong></td><td>C++</td><td>VST3 · AU · AUv3 · AAX · CLAP* · Standalone · LV2</td><td>行业默认。庞大的 <code>dsp</code> 模块、GUI 工具集，以及 <code>AudioProcessor</code> 抽象。GPL/商业双许可。 <a href="https://brendanjameslynskey.github.io/JUCE_Tutorial/">完整教程 →</a></td></tr>
+      <tr><td><strong>iPlug2</strong></td><td>C++</td><td>VST2/3 · AU · AAX · Web (WAM)</td><td>精简、宽松许可（开源）、独立开发者中很流行；可以编译到浏览器。</td></tr>
+      <tr><td><strong>DPF</strong></td><td>C++</td><td>VST2/3 · AU · CLAP · LV2 · JACK</td><td>DISTRHO Plugin Framework —— 极简、对 Linux 友好、ISC 许可。</td></tr>
+      <tr><td><strong>nih-plug</strong></td><td>Rust</td><td>VST3 · CLAP · Standalone</td><td>现代、内存安全的 Rust 框架，拥有一流的 CLAP 支持。</td></tr>
+      <tr><td><strong>Faust</strong></td><td>Faust DSL</td><td>经由 architectures → 全部</td><td>函数式 DSP 语言；编译器产出 C++/Wasm 和 plugin 封装。极其适合算法设计。</td></tr>
+      <tr><td><strong>Cmajor</strong></td><td>Cmajor DSL</td><td>JIT · C++ · plugin 导出</td><td>JUCE 作者推出的较新语言，直指音频 DSP，支持 JIT 与 AOT。</td></tr>
+      <tr><td><strong>RNBO (Max)</strong></td><td>可视化 → C++</td><td>VST · AU · Web · 嵌入式</td><td>Cycling '74 的“patch 转代码”导出；可视化设计，原生发布。</td></tr>
+      <tr><td><strong>VST3 SDK / AU SDK</strong></td><td>C++ / Obj-C</td><td>每种一种格式</td><td>上述所有框架所封装的原始厂商 SDK。</td></tr>
+    </tbody>
+  </table>
+  </div>
+  <p class="code-caption">*JUCE 中的 CLAP 支持可通过社区版 <em>clap-juce-extensions</em> 获得。</p>
+
+  <p>
+    对几乎所有的初学者而言，答案是 <strong>JUCE</strong>：它拥有最大的社区、最完整的 DSP与 GUI 库，并能从同一份 C++ 代码库面向每一种主流格式。本合集中包含一份<a href="https://brendanjameslynskey.github.io/JUCE_Tutorial/">专门的深入 JUCE 教程</a>，下面的每个示例 plugin 都同时以浏览器 JavaScript（让你在这里就能听到）和地道的 JUCE C++（让你能真正构建）两种形式展示了它的 DSP。
+  </p>
+</section>
+
+<!-- ============================================================ -->
+<section id="dsp">
+  <h2><span class="num">6</span>DSP 基础构建模块</h2>
+  <p class="lead">
+    一小套出奇精简的原语，经过组合与调校，就能产生全部的效果器与乐器目录。每一项都链接到它实际发挥作用的示例。
+  </p>
+
+  <h3>The sample loop（采样循环）</h3>
+  <p>
+    归根结底，这一切都是对采样的循环。处理器保留一些 <strong>状态（state）</strong>（过去的输入与输出、buffer 内容、振荡器相位），并对每个到来的采样 $x[n]$，作为输入与该状态的函数输出$y[n]$。一个线性时不变模块可以由一个 <strong>差分方程（difference equation）</strong>完整描述：
+  </p>
+  <div class="math">
+    $$y[n] = \sum_{k=0}^{M} b_k\,x[n-k] \;-\; \sum_{k=1}^{N} a_k\,y[n-k]$$
+  </div>
+  <p>
+    其行为由传递函数 $H(z) = \dfrac{\sum_k b_k z^{-k}}{1+\sum_k a_k z^{-k}}$ 刻画，在单位圆$z=e^{j\omega}$ 上求值即可读出频率响应。滤波器、均衡器、基于 comb 的延迟和混响都源自这一关系。
+  </p>
+
+  <div class="grid-2">
+    <div class="card"><h4>Biquads &amp; filters（双二阶与滤波器）</h4><p>二阶 IIR 小节 —— 每个<a href="https://brendanjameslynskey.github.io/Plugin_Example_EQ/">均衡器</a>和<a href="https://brendanjameslynskey.github.io/Plugin_Example_Synth/">合成器</a>中谐振滤波器的原子。</p></div>
+    <div class="card"><h4>Delay lines（延迟线）</h4><p>带（分数）读 tap 的环形 buffer —— <a href="https://brendanjameslynskey.github.io/Plugin_Example_Delay/">delay</a>、<a href="https://brendanjameslynskey.github.io/Plugin_Example_Reverb/">reverb</a> 和 <a href="https://brendanjameslynskey.github.io/Plugin_Example_Modulation/">modulation</a> 的基础。</p></div>
+    <div class="card"><h4>Envelopes &amp; detectors（包络与检测器）</h4><p>跟随或塑造电平随时间变化的包络跟随器与 ADSR 发生器 —— <a href="https://brendanjameslynskey.github.io/Plugin_Example_Compressor/">dynamics</a> 与音符表达（articulation）的引擎。</p></div>
+    <div class="card"><h4>Oscillators（振荡器）</h4><p>限带发生器（PolyBLEP、波表），用于<a href="https://brendanjameslynskey.github.io/Plugin_Example_Synth/">synthesis</a>，也用作调制用的 LFO。</p></div>
+    <div class="card"><h4>Nonlinearities（非线性）</h4><p>添加谐波的无记忆波形塑形器 —— <a href="https://brendanjameslynskey.github.io/Plugin_Example_Distortion/">distortion 与 saturation</a> 的核心，用过采样驯服。</p></div>
+    <div class="card"><h4>Transforms（变换）</h4><p>FFT 及其近亲把处理移到频域，用于频谱效果、卷积混响与分析。参见<a href="https://github.com/BrendanJamesLynskey/DSP_and_Music">变换指南</a>。</p></div>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<section id="shipping">
+  <h2><span class="num">7</span>构建与发布</h2>
+  <p class="lead">
+    plugin 既是程序也是产品。把可用的 DSP 变成能在每台机器的每个宿主中可靠加载的东西，本身就是一门学问。
+  </p>
+  <ul>
+    <li><strong>构建系统。</strong> 现代 JUCE 使用 CMake 生成所有目标；经典路径是 Projucer。CI 矩阵为 Windows、macOS（x86-64 + arm64 通用二进制）和 Linux 交叉编译。</li>
+    <li><strong>验证。</strong> Apple 的 <code>auval</code> 把关 AU 的加载；社区版 <code>pluginval</code> 针对线程、状态和 bus 布局的边界情况对 VST3/AU/AAX 进行压力测试。发布前通过它们没有商量余地。</li>
+    <li><strong>代码签名与公证。</strong> macOS 要求已签名、已公证、启用强化运行时（hardened runtime）的二进制，否则 Gatekeeper 会拦截；Windows 期望 Authenticode 签名。AAX 还额外要求 Avid 的 PACE 签名。</li>
+    <li><strong>安装程序。</strong> plugin 位于固定目录（macOS 上为 <code>~/Library/Audio/Plug-Ins/…</code>，Windows 上为 <code>%CommonProgramFiles%\VST3</code>）。安装程序会把每种格式的 bundle 放到正确位置，并清理旧版本。</li>
+    <li><strong>许可与保护。</strong> 从简单的序列号到挑战-响应（challenge–response）以及第三方系统；反盗版与用户好感之间永恒的两难。</li>
+    <li><strong>延迟报告。</strong> 任何 look-ahead 或过采样都会引入延迟；plugin 必须报告自己的延迟，宿主才能加以补偿并保持音轨同步。</li>
+  </ul>
+  <div class="note">本合集中的浏览器示例完全绕开了签名与安装程序 —— 它们只是网页 —— 但它们同样遵守已发布的原生 plugin 必须具备的 DSP 正确性、参数平滑与延迟感知。</div>
+</section>
+
+<!-- ============================================================ -->
+<section id="examples">
+  <h2><span class="num">8</span>示例合辑</h2>
+  <p class="lead">
+    九个仓库。这个枢纽站、一份深入的 JUCE 教程，以及七个可运行的 plugin 示例 —— 每一个都是自包含的页面，带有可实时试听的演示、真实的 DSP 数学，以及等效的 JUCE C++。
+  </p>
+
+  <div class="related-box">
+    <h3>探索这个家族</h3>
+    <ul>
+      <li><a href="https://brendanjameslynskey.github.io/JUCE_Tutorial/">JUCE Tutorial</a> —— 从空文件夹构建一个真实的 plugin：<code>AudioProcessor</code>、APVTS 参数、<code>processBlock</code>、编辑器与 look-and-feel、MIDI、预设、打包。</li>
+      <li><a href="https://brendanjameslynskey.github.io/Plugin_Example_EQ/">Parametric EQ</a> —— RBJ biquad 菜谱、可拖拽的响应曲线、实时分析器。</li>
+      <li><a href="https://brendanjameslynskey.github.io/Plugin_Example_Compressor/">Compressor</a> —— 前馈动态、增益计算器、knee、增益衰减电平表。</li>
+      <li><a href="https://brendanjameslynskey.github.io/Plugin_Example_Reverb/">Reverb</a> —— Schroeder/Freeverb comb–allpass 网络、实测的脉冲响应。</li>
+      <li><a href="https://brendanjameslynskey.github.io/Plugin_Example_Delay/">Delay</a> —— 插值延迟线、滤波反馈、乒乓、速度同步。</li>
+      <li><a href="https://brendanjameslynskey.github.io/Plugin_Example_Distortion/">Distortion / Saturation</a> —— 波形塑形、谐波生成、混叠与过采样。</li>
+      <li><a href="https://brendanjameslynskey.github.io/Plugin_Example_Modulation/">Modulation</a> —— 来自同一个扫频 LFO 的合唱、镶边与移相。</li>
+      <li><a href="https://brendanjameslynskey.github.io/Plugin_Example_Synth/">Synthesiser</a> —— 带 PolyBLEP 振荡器、可演奏的复音减法乐器。</li>
+    </ul>
+  </div>
+
+  <div class="references">
+    <h3>参考资料与延伸阅读</h3>
+    <ol>
+      <li>Steinberg. <em>VST 3 Audio Plug-Ins SDK.</em> Steinberg Media Technologies.</li>
+      <li>Apple. <em>Audio Unit Programming Guide</em> &amp; <em>Core Audio Overview.</em></li>
+      <li>Bitwig &amp; u-he. <em>CLAP — CLever Audio Plugin format specification</em> (2022). <em>github.com/free-audio/clap.</em></li>
+      <li>Storer, J. et&nbsp;al. <em>JUCE — the C++ library for audio applications.</em> juce.com.</li>
+      <li>Zölzer, U. (ed.) <em>DAFX: Digital Audio Effects</em>, 2nd ed., Wiley, 2011.</li>
+      <li>Smith, J.&nbsp;O. III. <em>Physical Audio Signal Processing</em> and the CCRMA online books, ccrma.stanford.edu/~jos.</li>
+      <li>Pirkle, W. <em>Designing Audio Effect Plugins in C++</em>, 2nd ed., Routledge, 2019.</li>
+      <li>Tarr, E. <em>Hack Audio: An Introduction to Computer Programming and Digital Signal Processing in MATLAB</em>, Routledge, 2018.</li>
+      <li>Ross Bencina. <em>"Real-time audio programming 101: time waits for nothing."</em></li>
+      <li>W3C. <em>Web Audio API</em> &amp; <em>AudioWorklet</em> specifications.</li>
+    </ol>
+  </div>
+</section>
+
+<footer>
+  属于 <a href="https://github.com/BrendanJamesLynskey/DSP_and_Music">DSP &amp; Music</a> 系列合辑 · Brendan Lynskey<br>数学公式使用 KaTeX 渲染 · 所有音频均通过 Web Audio API 实时合成与处理
+</footer>
+
+<script>
+/* ---------- hero: flowing spectrum ribbons ---------- */
+(function(){
+  const c=document.getElementById('hero'),x=c.getContext('2d');
+  function fit(){c.width=c.clientWidth;c.height=c.clientHeight;}
+  addEventListener('resize',fit);fit();
+  const cols=['#e8a44a','#4a9de8','#5ce89a','#e85a7a','#b06ae8'];
+  let t=0;
+  (function loop(){
+    t+=0.006; x.clearRect(0,0,c.width,c.height);
+    const W=c.width,H=c.height,mid=H*0.5;
+    for(let r=0;r<5;r++){
+      x.beginPath();
+      for(let i=0;i<=W;i+=6){
+        const p=i/W;
+        const y=mid
+          +Math.sin(p*10+t*1.7+r*1.1)*40*Math.sin(t*0.5+r)
+          +Math.sin(p*24-t*2.3+r)*18
+          +Math.sin(p*3+t+r*2)*60;
+        i===0?x.moveTo(i,y):x.lineTo(i,y);
+      }
+      x.strokeStyle=cols[r];x.globalAlpha=0.5;x.lineWidth=1.5;x.stroke();
+    }
+    x.globalAlpha=1;
+    requestAnimationFrame(loop);
+  })();
+})();
+
+/* ---------- section 0: a plugin is f(x) — live tilt-filter demo ---------- */
+(function(){
+  const cvs=document.getElementById('scopeDemo'),ctx=cvs.getContext('2d');
+  function fit(){cvs.width=cvs.clientWidth;cvs.height=150;}
+  addEventListener('resize',fit);fit();
+  const cap=document.getElementById('scopeCap'),state=document.getElementById('stateDemo');
+  let ac=null,playing=false,bypass=false;
+  let srcBuf=null, srcNode=null, lowSh=null, highSh=null, wetGain=null, dryGain=null, analyser=null, master=null;
+  const tone=document.getElementById('toneDemo'),mix=document.getElementById('mixDemo');
+
+  function buildLoop(ctx){
+    // synthesise a 2-bar loop: kick + hats + a bass + a chord pad, rendered offline
+    const dur=2.0, sr=ctx.sampleRate, len=Math.floor(dur*sr);
+    const off=new OfflineAudioContext(1,len,sr);
+    const now=0;
+    // chord pad (Am7): A2,C3,E3,G3
+    const chord=[110,130.81,164.81,196];
+    chord.forEach(f=>{
+      const o=off.createOscillator();o.type='sawtooth';o.frequency.value=f;
+      const g=off.createGain();g.gain.value=0.05;
+      const lp=off.createBiquadFilter();lp.type='lowpass';lp.frequency.value=1400;
+      o.connect(lp);lp.connect(g);g.connect(off.destination);o.start(0);o.stop(dur);
+    });
+    // bass line
+    const bassSeq=[55,55,73.42,82.41], step=0.5;
+    bassSeq.forEach((f,i)=>{
+      const o=off.createOscillator();o.type='square';o.frequency.value=f;
+      const g=off.createGain();
+      const s=i*step;g.gain.setValueAtTime(0,s);g.gain.linearRampToValueAtTime(0.12,s+0.01);
+      g.gain.exponentialRampToValueAtTime(0.001,s+0.42);
+      o.connect(g);g.connect(off.destination);o.start(s);o.stop(s+0.45);
+    });
+    // kick every beat + closed hats on 8ths
+    for(let b=0;b<4;b++){
+      const s=b*step;
+      const o=off.createOscillator(),g=off.createGain();
+      o.frequency.setValueAtTime(140,s);o.frequency.exponentialRampToValueAtTime(45,s+0.12);
+      g.gain.setValueAtTime(0.9,s);g.gain.exponentialRampToValueAtTime(0.001,s+0.18);
+      o.connect(g);g.connect(off.destination);o.start(s);o.stop(s+0.2);
+    }
+    for(let h=0;h<8;h++){
+      const s=h*0.25, n=off.createBufferSource();
+      const nb=off.createBuffer(1,Math.floor(sr*0.05),sr),d=nb.getChannelData(0);
+      for(let i=0;i<d.length;i++)d[i]=(Math.random()*2-1);
+      n.buffer=nb;const hp=off.createBiquadFilter();hp.type='highpass';hp.frequency.value=7000;
+      const g=off.createGain();g.gain.setValueAtTime(0.15,s);g.gain.exponentialRampToValueAtTime(0.001,s+0.04);
+      n.connect(hp);hp.connect(g);g.connect(off.destination);n.start(s);
+    }
+    return off.startRendering();
+  }
+
+  function draw(){
+    requestAnimationFrame(draw);
+    ctx.clearRect(0,0,cvs.width,cvs.height);
+    ctx.fillStyle='#06070a';ctx.fillRect(0,0,cvs.width,cvs.height);
+    if(!analyser){return;}
+    const N=analyser.fftSize,buf=new Float32Array(N);analyser.getFloatTimeDomainData(buf);
+    ctx.strokeStyle=bypass?'#8a8d9a':'#e8a44a';ctx.lineWidth=1.5;ctx.beginPath();
+    for(let i=0;i<N;i++){const xx=i/N*cvs.width,yy=cvs.height*0.5-buf[i]*cvs.height*0.42;i?ctx.lineTo(xx,yy):ctx.moveTo(xx,yy);}
+    ctx.stroke();
+    ctx.strokeStyle='#2a2d3a';ctx.beginPath();ctx.moveTo(0,cvs.height/2);ctx.lineTo(cvs.width,cvs.height/2);ctx.stroke();
+  }
+  draw();
+
+  function applyTone(){
+    if(!lowSh)return;
+    const t=parseFloat(tone.value); // -1..1  tilt
+    lowSh.gain.value = -t*12;   // negative tone lifts lows
+    highSh.gain.value = t*12;
+    const m=parseFloat(mix.value);
+    wetGain.gain.value = bypass?0:m;
+    dryGain.gain.value = bypass?1:(1-m);
+  }
+
+  async function start(){
+    if(!ac){ac=new (window.AudioContext||window.webkitAudioContext)();}
+    if(ac.state==='suspended')await ac.resume();
+    if(!srcBuf){state.textContent='正在渲染循环…';srcBuf=await buildLoop(ac);}
+    srcNode=ac.createBufferSource();srcNode.buffer=srcBuf;srcNode.loop=true;
+    lowSh=ac.createBiquadFilter();lowSh.type='lowshelf';lowSh.frequency.value=300;
+    highSh=ac.createBiquadFilter();highSh.type='highshelf';highSh.frequency.value=3000;
+    wetGain=ac.createGain();dryGain=ac.createGain();
+    master=ac.createGain();master.gain.value=0.9;
+    analyser=ac.createAnalyser();analyser.fftSize=1024;
+    // wet path: src -> lowsh -> highsh -> wetGain -> master
+    srcNode.connect(lowSh);lowSh.connect(highSh);highSh.connect(wetGain);wetGain.connect(master);
+    // dry path: src -> dryGain -> master
+    srcNode.connect(dryGain);dryGain.connect(master);
+    master.connect(analyser);analyser.connect(ac.destination);
+    applyTone();
+    srcNode.start();playing=true;state.textContent='播放中';
+  }
+  function stop(){if(srcNode){srcNode.stop();srcNode.disconnect();}playing=false;state.textContent='已停止';}
+
+  document.getElementById('playDemo').onclick=async function(){
+    if(!playing){this.textContent='⏸ 停止';await start();}
+    else{this.textContent='▶ 播放';stop();}
+  };
+  document.getElementById('bypassDemo').onclick=function(){
+    bypass=!bypass;this.textContent='bypass: '+(bypass?'开':'关');this.classList.toggle('active',bypass);
+    cap.textContent=bypass?'已旁通 —— 干信号':'输出波形（已处理）';applyTone();
+  };
+  tone.oninput=applyTone;mix.oninput=applyTone;
+})();
+
+/* ---------- TOC active-link highlighting ---------- */
+(function(){
+  const links=[...document.querySelectorAll('nav#toc a')];
+  const secs=links.map(a=>document.querySelector(a.getAttribute('href')));
+  addEventListener('scroll',()=>{
+    let i=secs.length-1;
+    for(let k=0;k<secs.length;k++){if(secs[k]&&secs[k].getBoundingClientRect().top<120)i=k;}
+    links.forEach(l=>l.classList.remove('active'));if(links[i])links[i].classList.add('active');
+  },{passive:true});
+})();
+</script>
+</body>
+</html>
